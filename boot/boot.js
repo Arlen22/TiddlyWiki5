@@ -70,7 +70,7 @@ $tw.utils.each = function(object,callback) {
 				if(next === false) {
 					break;
 				}
-		    }
+			}
 		} else {
 			var keys = Object.keys(object);
 			for (f=0, length=keys.length; f<length; f++) {
@@ -1431,7 +1431,7 @@ $tw.modules.define("$:/boot/tiddlerdeserializer/dom","tiddlerdeserializer",{
 });
 
 $tw.loadTiddlersBrowser = function() {
-    
+	
 	// In the browser, we load tiddlers from certain elements
 	var containerIds = [
 		"libraryModules",
@@ -1445,7 +1445,7 @@ $tw.loadTiddlersBrowser = function() {
 	for(var t=0; t<containerIds.length; t++) {
 		$tw.wiki.addTiddlers($tw.wiki.deserializeTiddlers("(DOM)",document.getElementById(containerIds[t])));
 	}
-    return {
+	return {
 		subscribe: (subscriber) => {
 			subscriber.complete();
 		}
@@ -1469,7 +1469,7 @@ $tw.boot.decryptEncryptedTiddlers = function(callback) {
 /////////////////////////// Node definitions
 
 if($tw.node) {
-    require('./boot-node').bootNode($tw);
+	require('./boot-node').bootNode($tw);
 }
 
 /////////////////////////// Main startup function called once tiddlers have been decrypted
@@ -1596,45 +1596,43 @@ $tw.boot.startup = function(options) {
 		}
 	}
 	// Load tiddlers
-    ($tw.boot.tasks.readBrowserTiddlers
-        ? $tw.loadTiddlersBrowser()
-        : $tw.loadTiddlersNode()
-    ).subscribe({
-        complete: () => {
-            // Load any preloaded tiddlers
-            if ($tw.preloadTiddlers) {
-                $tw.wiki.addTiddlers($tw.preloadTiddlers);
-            }
-            // Unpack plugin tiddlers
-            $tw.wiki.readPluginInfo();
-            $tw.wiki.registerPluginTiddlers("plugin", $tw.safeMode ? ["$:/core"] : undefined);
-            $tw.wiki.unpackPluginTiddlers();
-            // Process "safe mode"
-            if ($tw.safeMode) {
-                $tw.wiki.processSafeMode();
-            }
-            // Register typed modules from the tiddlers we've just loaded
-            $tw.wiki.defineTiddlerModules();
-            // And any modules within plugins
-            $tw.wiki.defineShadowModules();
-            // Make sure the crypto state tiddler is up to date
-            if ($tw.crypto) {
-                $tw.crypto.updateCryptoStateTiddler();
-            }
-            // Gather up any startup modules
-            $tw.boot.remainingStartupModules = []; // Array of startup modules
-            $tw.modules.forEachModuleOfType("startup", function (title, module) {
-                if (module.startup) {
-                    $tw.boot.remainingStartupModules.push(module);
-                }
-            });
-            // Keep track of the startup tasks that have been executed
-            $tw.boot.executedStartupModules = Object.create(null);
-            $tw.boot.disabledStartupModules = $tw.boot.disabledStartupModules || [];
-            // Repeatedly execute the next eligible task
-            $tw.boot.executeNextStartupTask(options.callback);
-        }
-    })
+($tw.boot.tasks.readBrowserTiddlers
+	? $tw.loadTiddlersBrowser()
+	: $tw.loadTiddlersNode()
+).subscribe({ complete: () => {
+	// Load any preloaded tiddlers
+	if ($tw.preloadTiddlers) {
+		$tw.wiki.addTiddlers($tw.preloadTiddlers);
+	}
+	// Unpack plugin tiddlers
+	$tw.wiki.readPluginInfo();
+	$tw.wiki.registerPluginTiddlers("plugin", $tw.safeMode ? ["$:/core"] : undefined);
+	$tw.wiki.unpackPluginTiddlers();
+	// Process "safe mode"
+	if ($tw.safeMode) {
+		$tw.wiki.processSafeMode();
+	}
+	// Register typed modules from the tiddlers we've just loaded
+	$tw.wiki.defineTiddlerModules();
+	// And any modules within plugins
+	$tw.wiki.defineShadowModules();
+	// Make sure the crypto state tiddler is up to date
+	if ($tw.crypto) {
+		$tw.crypto.updateCryptoStateTiddler();
+	}
+	// Gather up any startup modules
+	$tw.boot.remainingStartupModules = []; // Array of startup modules
+	$tw.modules.forEachModuleOfType("startup", function (title, module) {
+		if (module.startup) {
+			$tw.boot.remainingStartupModules.push(module);
+		}
+	});
+	// Keep track of the startup tasks that have been executed
+	$tw.boot.executedStartupModules = Object.create(null);
+	$tw.boot.disabledStartupModules = $tw.boot.disabledStartupModules || [];
+	// Repeatedly execute the next eligible task
+	$tw.boot.executeNextStartupTask(options.callback);
+}})
 };
 
 /*
