@@ -1601,15 +1601,15 @@ $tw.boot.startup = function(options) {
 	: $tw.loadTiddlersNode()
 ).subscribe({ complete: () => {
 	// Load any preloaded tiddlers
-	if ($tw.preloadTiddlers) {
+	if($tw.preloadTiddlers) {
 		$tw.wiki.addTiddlers($tw.preloadTiddlers);
 	}
 	// Unpack plugin tiddlers
 	$tw.wiki.readPluginInfo();
-	$tw.wiki.registerPluginTiddlers("plugin", $tw.safeMode ? ["$:/core"] : undefined);
+	$tw.wiki.registerPluginTiddlers("plugin",$tw.safeMode ? ["$:/core"] : undefined);
 	$tw.wiki.unpackPluginTiddlers();
 	// Process "safe mode"
-	if ($tw.safeMode) {
+	if($tw.safeMode) {
 		$tw.wiki.processSafeMode();
 	}
 	// Register typed modules from the tiddlers we've just loaded
@@ -1617,13 +1617,13 @@ $tw.boot.startup = function(options) {
 	// And any modules within plugins
 	$tw.wiki.defineShadowModules();
 	// Make sure the crypto state tiddler is up to date
-	if ($tw.crypto) {
+	if($tw.crypto) {
 		$tw.crypto.updateCryptoStateTiddler();
 	}
 	// Gather up any startup modules
 	$tw.boot.remainingStartupModules = []; // Array of startup modules
-	$tw.modules.forEachModuleOfType("startup", function (title, module) {
-		if (module.startup) {
+	$tw.modules.forEachModuleOfType("startup",function(title,module) {
+		if(module.startup) {
 			$tw.boot.remainingStartupModules.push(module);
 		}
 	});
