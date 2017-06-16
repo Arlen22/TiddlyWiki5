@@ -1431,7 +1431,7 @@ $tw.modules.define("$:/boot/tiddlerdeserializer/dom","tiddlerdeserializer",{
 });
 
 $tw.loadTiddlersBrowser = function() {
-    const Observable = require('rxjs').Observable;
+    
 	// In the browser, we load tiddlers from certain elements
 	var containerIds = [
 		"libraryModules",
@@ -1445,7 +1445,11 @@ $tw.loadTiddlersBrowser = function() {
 	for(var t=0; t<containerIds.length; t++) {
 		$tw.wiki.addTiddlers($tw.wiki.deserializeTiddlers("(DOM)",document.getElementById(containerIds[t])));
 	}
-    return Observable.empty();
+    return {
+		subscribe: (subscriber) => {
+			subscriber.complete();
+		}
+	}
 };
 
 } else {
