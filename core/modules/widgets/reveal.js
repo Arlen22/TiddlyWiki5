@@ -127,7 +127,7 @@ Read the state tiddler
 RevealWidget.prototype.readState = function() {
 	// Read the information from the state tiddler
 	var state,
-	    defaultState = this["default"] || this.getVariable("currentTiddler");
+	    defaultState = this["default"];
 	if(this.stateTitle) {
 		var stateTitleTiddler = this.wiki.getTiddler(this.stateTitle);
 		if(this.stateField) {
@@ -205,7 +205,7 @@ RevealWidget.prototype.refresh = function(changedTiddlers) {
 	} else {
 		var currentlyOpen = this.isOpen;
 		this.readState();
-		if(this.isOpen !== currentlyOpen || (this.stateTiddlerTitle && changedTiddlers[this.stateTiddlerTitle])) {
+		if(this.isOpen !== currentlyOpen) {
 			if(this.retain === "yes") {
 				this.updateState();
 			} else {

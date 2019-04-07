@@ -18,6 +18,10 @@ exports.platforms = ["browser"];
 exports.before = ["story"];
 exports.synchronous = true;
 
+var STATE_OUT_OF_VIEW = "0",
+	STATE_NEAR_VIEW = "1",
+	STATE_IN_VIEW = "2";
+
 var isWaitingForAnimationFrame = 0, // Bitmask:
 	ANIM_FRAME_CAUSED_BY_LOAD = 1, // Animation frame was requested because of page load
 	ANIM_FRAME_CAUSED_BY_SCROLL = 2, // Animation frame was requested because of page scroll
@@ -106,12 +110,8 @@ function setZoomClasses() {
 }
 
 function checkVisibility() {
-	var elements = document.querySelectorAll(".tc-dynaview-set-tiddler-when-visible");
+	var elements = document.querySelectorAll(".tc-dynaview-track-tiddler-when-visible");
 	$tw.utils.each(elements,function(element) {
-		// Bail if we've already triggered this element and we're not unsetting a tiddler when this element leaves the viewport
-		if(element.getAttribute("data-dynaview-has-triggered") === "true" && !element.hasAttribute("data-dynaview-unset-tiddler")) {
-			return;
-		}
 		// Calculate whether the element is visible
 		var elementRect = element.getBoundingClientRect(),
 			viewportWidth = window.innerWidth || document.documentElement.clientWidth,
@@ -122,36 +122,31 @@ function checkVisibility() {
 				top: 0,
 				bottom: viewportHeight
 			},
-			tiddler,
-			value;
-		if(element.classList.contains("tc-dynaview-expand-viewport")) {
-			viewportRect.left -= viewportWidth;
-			viewportRect.right += viewportWidth;
-			viewportRect.top -= viewportHeight;
-			viewportRect.bottom += viewportHeight;
-		}
-		if(elementRect.left > viewportRect.right || 
-			elementRect.right < viewportRect.left || 
-			elementRect.top > viewportRect.bottom ||
-			elementRect.bottom < viewportRect.top) {
-			// Element is not visible
-			// Set the unset tiddler if required and this element has previously been triggered
-			if(element.getAttribute("data-dynaview-has-triggered") === "true" && element.hasAttribute("data-dynaview-unset-tiddler")) {
-				tiddler = element.getAttribute("data-dynaview-unset-tiddler");
-				value = element.getAttribute("data-dynaview-unset-value") || "";
-				if(tiddler && $tw.wiki.getTiddlerText(tiddler) !== value) {
-					$tw.wiki.addTiddler(new $tw.Tiddler({title: tiddler, text: value}));
+			title = element.getAttribute("data-dynaview-track-tiddler");
+		if(title) {
+			var currValue = $tw.wiki.getTiddlerText(title),
+				newValue = currValue;
+			// Within viewport
+			if(!(elementRect.left > viewportRect.right || 
+								elementRect.right < viewportRect.left || 
+								elementRect.top > viewportRect.bottom ||
+								elementRect.bottom < viewportRect.top)) {
+				newValue = STATE_IN_VIEW;
+			// Near viewport
+			} else if(!(elementRect.left > (viewportRect.right + viewportWidth) || 
+								elementRect.right < (viewportRect.left - viewportWidth) || 
+								elementRect.top > (viewportRect.bottom + viewportHeight) ||
+								elementRect.bottom < (viewportRect.top - viewportHeight))) {
+				newValue = STATE_NEAR_VIEW;
+			} else {
+				// Outside viewport
+				if(currValue !== undefined) {
+					newValue = STATE_OUT_OF_VIEW;
 				}
-				element.setAttribute("data-dynaview-has-triggered","false");				
 			}
-		} else {
-			// Element is visible
-			tiddler = element.getAttribute("data-dynaview-set-tiddler");
-			value = element.getAttribute("data-dynaview-set-value") || "";
-			if(tiddler && $tw.wiki.getTiddlerText(tiddler) !== value) {
-				$tw.wiki.addTiddler(new $tw.Tiddler({title: tiddler, text: value}));
+			if(newValue !== currValue) {
+				$tw.wiki.addTiddler(new $tw.Tiddler({title: title, text: newValue}));				
 			}
-			element.setAttribute("data-dynaview-has-triggered","true");
 		}
 	});
 }
@@ -239,7 +234,7 @@ function findTopmostTiddler() {
 	return {
 		element: topmostElement,
 		offset: -topmostElementTop,
-		title: topmostElement.getAttribute("data-tiddler-title")
+		title: topmostElement ? topmostElement.getAttribute("data-tiddler-title") : null
 	};
 }
 
