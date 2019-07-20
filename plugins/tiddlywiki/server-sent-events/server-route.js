@@ -15,7 +15,7 @@ interface Route {
 
 exports.method = "GET";
 
-exports.path = /^\/events$/
+exports.path = /^\/status\/events$/
 
 exports.handler = handler;
 
@@ -28,10 +28,12 @@ exports.bodyFormat = "stream";
  * @param {ServerState} state 
  */
 function handler(request, response, state) {
+  
   if (request.headers.accept && request.headers.accept === 'text/event-stream') {
     $tw.serverEvents.handleConnection(request, response, state);
   } else {
     response.writeHead(404, {});
+    response.write(JSON.stringify(request.headers.accept))
     response.end();
   }
 }

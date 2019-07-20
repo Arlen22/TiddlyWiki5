@@ -14,7 +14,7 @@ Adds an EventEmitter class which may be used on both the server and client
  */
 var activeConnections = [];
 
-var serverEvents = { handleConnection, activeConnections, broadcastEvent }
+var serverEvents = { handleConnection, activeConnections, broadcastEvent, isServer: true }
 
 function broadcastEvent(type, data) {
   if (typeof type !== "string") {
@@ -50,8 +50,8 @@ function handleConnection(request, response, state) {
 
   activeConnections.push(connection);
 
-  this.request.on("close", () => {
-    let index = activeConnections.indexOf(conection);
+  request.on("close", function() {
+    let index = activeConnections.indexOf(connection);
     if (index !== -1) activeConnections.splice(index, 1);
   })
 
@@ -77,8 +77,14 @@ function handleConnection(request, response, state) {
   return connection;
 
 }
+if ($tw.browser) {
 
-exports.serverEvents = serverEvents;
-
+  let eventsURL = location.protocol + "//" + location.host + location.pathname
+      + (location.pathname.endsWith("/") ? "" : "/")
+      + "status/events";
+  exports.serverEvents = new EventSource(eventsURL, { withCredentials: true });
+} else {
+  exports.serverEvents = serverEvents;
+}
 })();
 
