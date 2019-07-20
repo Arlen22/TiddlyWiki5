@@ -1,0 +1,7 @@
+{
+	"title": "$:/plugins/tiddlywiki/server-sent-events",
+	"description": "Websocket server and client",
+	"author": "ArlenBeiler",
+	"core-version": ">=5.0.0",
+	"list": ""
+}
