@@ -16,6 +16,11 @@ var activeConnections = [];
 
 var serverEvents = { handleConnection, activeConnections, broadcastEvent, isServer: true }
 
+/**
+ * @this {typeof serverEvents}
+ * @param {string} type 
+ * @param {string} data 
+ */
 function broadcastEvent(type, data) {
   if (typeof type !== "string") {
     throw new Error("type must be a string");
@@ -23,15 +28,14 @@ function broadcastEvent(type, data) {
   if (typeof data !== "string" || data.indexOf("\n") !== -1) {
     throw new Error("data must be a single-line string");
   }
-  activeConnections.forEach(conn => {
+  this.activeConnections.forEach(function (conn) {
     conn.sendEvent(type, data);
   });
 }
-serverEvents.handleConnection = handleConnection;
-serverEvents.activeConnections = activeConnections;
 
 /**
  * 
+ * @this {typeof serverEvents}
  * @param {import("http").IncomingMessage} request 
  * @param {import("http").ServerResponse} response 
  * @param {ServerState} state 
@@ -48,12 +52,12 @@ function handleConnection(request, response, state) {
 
   var connection = { request, response, state, sendEvent };
 
-  activeConnections.push(connection);
+  this.activeConnections.push(connection);
 
-  request.on("close", function() {
-    let index = activeConnections.indexOf(connection);
-    if (index !== -1) activeConnections.splice(index, 1);
-  })
+  request.on("close", (function(self){ return function () {
+    let index = self.activeConnections.indexOf(connection);
+    if (index !== -1) self.activeConnections.splice(index, 1);
+  } })(this));
 
   /**
    * @this {typeof connection}
@@ -78,13 +82,13 @@ function handleConnection(request, response, state) {
 
 }
 if ($tw.browser) {
-
   let eventsURL = location.protocol + "//" + location.host + location.pathname
-      + (location.pathname.endsWith("/") ? "" : "/")
-      + "status/events";
+    + (location.pathname.endsWith("/") ? "" : "/")
+    + "status/events";
   exports.serverEvents = new EventSource(eventsURL, { withCredentials: true });
 } else {
   exports.serverEvents = serverEvents;
 }
+
 })();
 
