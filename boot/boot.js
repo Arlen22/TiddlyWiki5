@@ -779,7 +779,8 @@ $tw.modules.execute = function(moduleName,moduleRoot) {
 			throw "Cannot find module named '" + moduleName + "' required by module '" + moduleRoot + "', resolved to " + name;
 		} else {
 			// If we don't have a module with that name, let node.js try to find it
-			return require(moduleName);
+			const requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
+			return requireFunc(moduleName);
 		}
 	}
 	// Execute the module if we haven't already done so
@@ -2145,7 +2146,7 @@ $tw.boot.startup = function(options) {
 		// For writable tiddler files, a hashmap of title to {filepath:,type:,hasMetaFile:}
 		$tw.boot.files = Object.create(null);
 		// System paths and filenames
-		$tw.boot.bootPath = options.bootPath || path.dirname(module.filename);
+		$tw.boot.bootPath = options.bootPath || path.dirname(__filename);
 		$tw.boot.corePath = path.resolve($tw.boot.bootPath,"../core");
 		// If there's no arguments then default to `--help`
 		if($tw.boot.argv.length === 0) {
@@ -2252,14 +2253,75 @@ $tw.boot.startup = function(options) {
 	if($tw.safeMode) {
 		$tw.wiki.processSafeMode();
 	}
-	// Register typed modules from the tiddlers we've just loaded
-	$tw.wiki.defineTiddlerModules();
-	// And any modules within plugins
-	$tw.wiki.defineShadowModules();
+	const HOTMOD = true && !$tw.browser;
+	if(HOTMOD) {
+		require("../test.js").tiddlywiki($tw);
+	} else {
+		// Register typed modules from the tiddlers we've just loaded
+		$tw.wiki.defineTiddlerModules();
+		// And any modules within plugins
+		$tw.wiki.defineShadowModules();
+	}
 	// Make sure the crypto state tiddler is up to date
 	if($tw.crypto) {
 		$tw.crypto.updateCryptoStateTiddler();
 	}
+	
+	//moduleInfo: moduleInfo,
+	var contextNames = [
+		"module",
+		"exports",
+		"console",
+		"setInterval",
+		"clearInterval",
+		"setTimeout",
+		"clearTimeout",
+		"Buffer",
+		"$tw",
+		"require"
+	];
+	// console.log($tw.modules);
+	HOTMOD || !$tw.browser && fs.writeFileSync("test.js", `exports.tiddlywiki = function($tw){ 
+	function _copyContext(moduleInfo, require){
+		// var _exports = {},
+		contextValues = [
+			{exports: moduleInfo.exports },
+			moduleInfo.exports,
+			console,
+			setInterval,
+			clearInterval,
+			setTimeout,
+			clearTimeout,
+			$tw.browser ? undefined : Buffer,
+			$tw,
+			require
+		];
+		return contextValues;
+	}
+	function _define(title, moduleType, definer){
+		$tw.modules.define(title, moduleType, (moduleInfo, exports, require) => {
+			definer.apply(null, _copyContext(moduleInfo, require));
+		});
+	}	
+	
+		` + Object.keys($tw.modules.titles).map(title => {
+			// let { definition, moduleType } = $tw.modules.titles[title];
+		if(typeof $tw.modules.titles[title].definition === "string") {
+			
+			var moduleInfo = $tw.modules.titles[title];
+			// tiddler = $tw.wiki.getTiddler(title),
+
+			var code = "_define(" + JSON.stringify(title) + "," + JSON.stringify(moduleInfo.moduleType) + ",(function(" + contextNames.join(",") + ") {(function(){\n" 
+			+ $tw.modules.titles[title].definition 
+			+ "\n;})();\nreturn exports;\n}));";
+
+			return code;
+		} else {
+			console.log(title, $tw.modules.titles[title].definition);
+		}
+	}).join("\r\n") + `}`);
+	
+	// console.log($tw.modules.titles[Object.keys($tw.modules.titles)[0]]);
 	// Gather up any startup modules
 	$tw.boot.remainingStartupModules = []; // Array of startup modules
 	$tw.modules.forEachModuleOfType("startup",function(title,module) {
