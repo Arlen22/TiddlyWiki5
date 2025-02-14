@@ -24,9 +24,9 @@
     "wiki"
   ],
   "devDependencies": {
+    "@eslint/js": "^9.12.0",
     "@playwright/test": "^1.47.2",
     "eslint": "^9.12.0",
-    "@eslint/js": "^9.12.0",
     "playwright": "^1.47.2"
   },
   "license": "BSD",
@@ -40,10 +40,12 @@
     "mws-add-user": "node ./tiddlywiki.js ./editions/multiwikiserver --build load-mws-demo-data --mws-listen --build mws-add-user --quit",
     "test": "npm run build:test-edition && npm run test:multiwikiserver-edition",
     "lint:fix": "eslint . --fix",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "mws:clean": "rm -rf ./editions/multiwikiserver/store"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
-    "node-sqlite3-wasm": "^0.8.25"
+    "node-sqlite3-wasm": "^0.8.25",
+    "prisma": "^6.2.1"
   }
 }
