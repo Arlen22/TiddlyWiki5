@@ -12,26 +12,27 @@ POST /logout
 /*global $tw: false */
 "use strict";
 
-exports.method = "POST";
-
-exports.path = /^\/logout$/;
-
-exports.csrfDisable = true;
-
-exports.handler = function(request,response,state) {
-	// if(state.authenticatedUser) {
+const route = {
+	method: "POST",
+	path: /^\/logout$/,
+	csrfDisable: true,
+	handler: function(request,response,state) {
+		// if(state.authenticatedUser) {
 		state.server.sqlTiddlerDatabase.deleteSession(state.authenticatedUser.sessionId);
-	// }
-	var cookies = request.headers.cookie ? request.headers.cookie.split(";") : [];
-	for(var i = 0; i < cookies.length; i++) {
-		var cookie = cookies[i].trim().split("=")[0];
-		response.setHeader("Set-Cookie", cookie + "=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict");
+		// }
+		var cookies = request.headers.cookie ? request.headers.cookie.split(";") : [];
+		for(var i = 0; i < cookies.length; i++) {
+			var cookie = cookies[i].trim().split("=")[0];
+			response.setHeader("Set-Cookie", cookie + "=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict");
+		}
+			
+		// response.setHeader("Set-Cookie", "session=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+		// response.setHeader("Set-Cookie", "returnUrl=; HttpOnly; Path=/");
+		response.writeHead(302, { "Location": "/login" });
+		response.end();
 	}
-		
-	// response.setHeader("Set-Cookie", "session=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
-	// response.setHeader("Set-Cookie", "returnUrl=; HttpOnly; Path=/");
-	response.writeHead(302, { "Location": "/login" });
-	response.end();
 };
+
+module.exports = route;
 
 }());

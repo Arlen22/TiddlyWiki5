@@ -18,35 +18,37 @@ GET /.system/:filename
 /*global $tw: false */
 "use strict";
 
-exports.method = "GET";
-
-exports.path = /^\/\.system\/(.+)$/;
-
 const SYSTEM_FILE_TITLE_PREFIX = "$:/plugins/tiddlywiki/multiwikiserver/system-files/";
 
-exports.handler = function(request,response,state) {
-	// Get the  parameters
-	const filename = $tw.utils.decodeURIComponentSafe(state.params[0]),
-		title = SYSTEM_FILE_TITLE_PREFIX + filename,
-		tiddler = $tw.wiki.getTiddler(title),
-		isSystemFile = tiddler && tiddler.hasTag("$:/tags/MWS/SystemFile"),
-		isSystemFileWikified = tiddler && tiddler.hasTag("$:/tags/MWS/SystemFileWikified");
-	if(tiddler && (isSystemFile || isSystemFileWikified)) {
-		let text = tiddler.fields.text || "";
-		const type = tiddler.fields["system-file-type"] || tiddler.fields.type || "text/plain",
-			encoding = ($tw.config.contentTypeInfo[type] ||{encoding: "utf8"}).encoding;
-		if(isSystemFileWikified) {
-			text = $tw.wiki.renderTiddler("text/plain",title);
+const route = {
+	method: "GET",
+	path: /^\/\.system\/(.+)$/,
+	handler: function(request,response,state) {
+		// Get the  parameters
+		const filename = $tw.utils.decodeURIComponentSafe(state.params[0]),
+			title = SYSTEM_FILE_TITLE_PREFIX + filename,
+			tiddler = $tw.wiki.getTiddler(title),
+			isSystemFile = tiddler && tiddler.hasTag("$:/tags/MWS/SystemFile"),
+			isSystemFileWikified = tiddler && tiddler.hasTag("$:/tags/MWS/SystemFileWikified");
+		if(tiddler && (isSystemFile || isSystemFileWikified)) {
+			let text = tiddler.fields.text || "";
+			const type = tiddler.fields["system-file-type"] || tiddler.fields.type || "text/plain",
+				encoding = ($tw.config.contentTypeInfo[type] ||{encoding: "utf8"}).encoding;
+			if(isSystemFileWikified) {
+				text = $tw.wiki.renderTiddler("text/plain",title);
+			}
+			response.writeHead(200, "OK",{
+				"Content-Type": type
+			});
+			response.write(text,encoding);
+			response.end();
+		} else {
+			response.writeHead(404);
+			response.end();
 		}
-		response.writeHead(200, "OK",{
-			"Content-Type": type
-		});
-		response.write(text,encoding);
-		response.end();
-	} else {
-		response.writeHead(404);
-		response.end();
 	}
 };
+
+module.exports = route;
 
 }());

@@ -12,33 +12,32 @@ POST /admin/anon
 /*global $tw: false */
 "use strict";
 
-exports.method = "POST";
+const route = {
+  method: "POST",
+  path: /^\/admin\/anon\/?$/,
+  bodyFormat: "www-form-urlencoded",
+  csrfDisable: true,
+  handler: function(request, response, state) {
+    // Check if user is authenticated and is admin
+    if(!state.authenticatedUser || !state.authenticatedUser.isAdmin) {
+      response.writeHead(401, "Unauthorized", { "Content-Type": "text/plain" });
+      response.end("Unauthorized");
+      return;
+    }
 
-exports.path = /^\/admin\/anon\/?$/;
+    // Update the configuration tiddlers
+    var wiki = $tw.wiki;
+    wiki.addTiddler({
+      title: "$:/config/MultiWikiServer/ShowAnonymousAccessModal",
+      text: "yes"
+    });
 
-exports.bodyFormat = "www-form-urlencoded";
-
-exports.csrfDisable = true;
-
-exports.handler = function(request, response, state) {
-  // Check if user is authenticated and is admin
-  if(!state.authenticatedUser || !state.authenticatedUser.isAdmin) {
-    response.writeHead(401, "Unauthorized", { "Content-Type": "text/plain" });
-    response.end("Unauthorized");
-    return;
+    // Redirect back to admin page
+    response.writeHead(302, {"Location": "/"});
+    response.end();
   }
-
-  
-  // Update the configuration tiddlers
-  var wiki = $tw.wiki;
-  wiki.addTiddler({
-    title: "$:/config/MultiWikiServer/ShowAnonymousAccessModal",
-    text: "yes"
-  });
-
-  // Redirect back to admin page
-  response.writeHead(302, {"Location": "/"});
-  response.end();
 };
 
-}()); 
+module.exports = route;
+
+}());

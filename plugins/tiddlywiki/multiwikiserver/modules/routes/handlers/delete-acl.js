@@ -8,22 +8,18 @@ POST /admin/delete-acl
 \*/
 (function () {
 
-	/*jslint node: true, browser: true */
-	/*global $tw: false */
-	"use strict";
+/*jslint node: true, browser: true */
+/*global $tw: false */
+"use strict";
 
-	var aclMiddleware = require("$:/plugins/tiddlywiki/multiwikiserver/modules/routes/helpers/acl-middleware.js").middleware;
+var aclMiddleware = require("$:/plugins/tiddlywiki/multiwikiserver/modules/routes/helpers/acl-middleware.js").middleware;
 
-	exports.method = "POST";
-
-	exports.path = /^\/admin\/delete-acl\/?$/;
-
-
-	exports.bodyFormat = "www-form-urlencoded";
-
-	exports.csrfDisable = true;
-
-	exports.handler = function (request, response, state) {
+const route = {
+	method: "POST",
+	path: /^\/admin\/delete-acl\/?$/,
+	bodyFormat: "www-form-urlencoded",
+	csrfDisable: true,
+	handler: function (request, response, state) {
 		var sqlTiddlerDatabase = state.server.sqlTiddlerDatabase;
 		var recipe_name = state.data.recipe_name;
 		var bag_name = state.data.bag_name;
@@ -36,6 +32,9 @@ POST /admin/delete-acl
 
 		response.writeHead(302, { "Location": "/admin/acl/" + recipe_name + "/" + bag_name });
 		response.end();
-	};
+	}
+};
+
+module.exports = route;
 
 }());

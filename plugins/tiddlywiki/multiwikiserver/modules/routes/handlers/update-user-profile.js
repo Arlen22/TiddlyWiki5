@@ -12,64 +12,64 @@ POST /update-user-profile
 /*global $tw: false */
 "use strict";
 
-exports.method = "POST";
+const route = {
+  method: "POST",
+  path: /^\/update-user-profile\/?$/,
+  bodyFormat: "www-form-urlencoded",
+  csrfDisable: true,
+  handler: function (request,response,state) {
+    if(!state.authenticatedUser) {
+      $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
+        title: "$:/temp/mws/login/error",
+        text: "You must be logged in to update profiles"
+      }));
+      response.writeHead(302, { "Location": "/login" });
+      response.end();
+      return;
+    }
 
-exports.path = /^\/update-user-profile\/?$/;
+    var userId = state.data.userId;
+    var username = state.data.username;
+    var email = state.data.email;
+    var roleId = state.data.role;
+    var currentUserId = state.authenticatedUser.user_id;
 
-exports.bodyFormat = "www-form-urlencoded";
+    var hasPermission = ($tw.utils.parseInt(userId) === currentUserId) || state.authenticatedUser.isAdmin;
 
-exports.csrfDisable = true;
+    if(!hasPermission) {
+      $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
+        title: "$:/temp/mws/update-profile/" + userId + "/error",
+        text: "You don't have permission to update this profile"
+      }));
+      response.writeHead(302, { "Location": "/admin/users/" + userId });
+      response.end();
+      return;
+    }
 
-exports.handler = function (request,response,state) {
-  if(!state.authenticatedUser) {
-    $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
-      title: "$:/temp/mws/login/error",
-      text: "You must be logged in to update profiles"
-    }));
-    response.writeHead(302, { "Location": "/login" });
-    response.end();
-    return;
-  }
+    if(!state.authenticatedUser.isAdmin) {
+      var userRole = state.server.sqlTiddlerDatabase.getUserRoles(userId);
+      roleId = userRole.role_id;
+    }
 
-  var userId = state.data.userId;
-  var username = state.data.username;
-  var email = state.data.email;
-  var roleId = state.data.role;
-  var currentUserId = state.authenticatedUser.user_id;
+    var result = state.server.sqlTiddlerDatabase.updateUser(userId, username, email, roleId);
 
-  var hasPermission = ($tw.utils.parseInt(userId) === currentUserId) || state.authenticatedUser.isAdmin;
+    if(result.success) {
+      $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
+        title: "$:/temp/mws/update-profile/" + userId + "/success",
+        text: result.message
+      }));
+    } else {
+      $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
+        title: "$:/temp/mws/update-profile/" + userId + "/error",
+        text: result.message
+      }));
+    }
 
-  if(!hasPermission) {
-    $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
-      title: "$:/temp/mws/update-profile/" + userId + "/error",
-      text: "You don't have permission to update this profile"
-    }));
     response.writeHead(302, { "Location": "/admin/users/" + userId });
     response.end();
-    return;
   }
-
-  if(!state.authenticatedUser.isAdmin) {
-    var userRole = state.server.sqlTiddlerDatabase.getUserRoles(userId);
-    roleId = userRole.role_id;
-  }
-
-  var result = state.server.sqlTiddlerDatabase.updateUser(userId, username, email, roleId);
-
-  if(result.success) {
-    $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
-      title: "$:/temp/mws/update-profile/" + userId + "/success",
-      text: result.message
-    }));
-  } else {
-    $tw.mws.store.adminWiki.addTiddler(new $tw.Tiddler({
-      title: "$:/temp/mws/update-profile/" + userId + "/error",
-      text: result.message
-    }));
-  }
-
-  response.writeHead(302, { "Location": "/admin/users/" + userId });
-  response.end();
 };
+
+module.exports = route;
 
 }());
